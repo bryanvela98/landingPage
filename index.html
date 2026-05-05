@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bryan E. Vela — Software & ML/AI Engineer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <style>
+    /* ─── DESIGN TOKENS ─────────────────────────────────────────── */
+    :root {
+      --dark:       #141413;
+      --light:      #faf9f5;
+      --mid-gray:   #b0aea5;
+      --light-gray: #e8e6dc;
+      --orange:     #d97757;
+      --blue:       #6a9bcc;
+      --green:      #788c5d;
+    }
+
+    /* ─── RESET ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: linear-gradient(135deg, #faf9f5 0%, #f5ede6 100%);
+      background-attachment: fixed;
+      color: var(--dark);
+      min-height: 100vh;
+      padding-top: 32px;
+      position: relative;
+    }
+
+    /* CRT Scanlines */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.015) 2px,
+        rgba(0,0,0,0.015) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Dot pattern overlay on body */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(217,119,87,0.08) 1px, transparent 1px);
+      background-size: 16px 16px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── ANIMATED BACKGROUND ──────────────────────────────────────── */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.55;
+    }
+
+    /* ─── BOOT SCREEN ───────────────────────────────────────────── */
+    #boot-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--dark);
+      z-index: 100000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      transition: opacity 0.5s ease;
+    }
+    #boot-screen.fade-out { opacity: 0; pointer-events: none; }
+
+    .boot-mac-face {
+      width: 80px;
+      height: 80px;
+      border: 4px solid var(--light);
+      background: var(--dark);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .boot-eyes {
+      display: flex;
+      gap: 14px;
+      margin-top: -8px;
+    }
+    .boot-eye {
+      width: 10px;
+      height: 10px;
+      background: var(--light);
+    }
+    .boot-smile {
+      width: 30px;
+      height: 14px;
+      border: 3px solid var(--light);
+      border-top: none;
+      border-radius: 0 0 30px 30px;
+      margin-top: 8px;
+    }
+    .boot-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--light);
+      letter-spacing: 1px;
+    }
+    .boot-loading-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--orange);
+    }
+    .boot-bar-track {
+      width: 250px;
+      height: 14px;
+      background: var(--light-gray);
+      border: 1px solid var(--mid-gray);
+      overflow: hidden;
+    }
+    .boot-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--orange);
+      animation: bootFill 1.5s ease-out forwards;
+    }
+    @keyframes bootFill { from { width: 0%; } to { width: 100%; } }
+
+    /* ─── MENU BAR ──────────────────────────────────────────────── */
+    #menu-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      background: var(--dark);
+      border-bottom: 2px solid var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      z-index: 10000;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: #fff;
+    }
+    .menu-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .menu-logo {
+      color: var(--orange);
+      font-size: 9px;
+    }
+    .menu-item {
+      cursor: pointer;
+      padding: 2px 4px;
+      transition: color 0.12s, background 0.12s;
+      text-decoration: none;
+      color: #fff;
+    }
+    .menu-item:hover {
+      color: var(--dark);
+      background: var(--orange);
+    }
+    .menu-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 7px;
+      color: var(--light);
+    }
+    #menu-clock { letter-spacing: 0.5px; }
+    .cursor-blink {
+      display: inline-block;
+      width: 7px;
+      background: #fff;
+      height: 11px;
+      vertical-align: middle;
+      animation: cursorBlink 0.8s step-end infinite;
+    }
+    @keyframes cursorBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    /* Hamburger for mobile */
+    #hamburger {
+      display: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #fff;
+      padding: 2px 6px;
+    }
+    #mobile-nav {
+      display: none;
+      position: fixed;
+      top: 32px;
+      left: 0;
+      right: 0;
+      background: var(--dark);
+      border-bottom: 2px solid var(--orange);
+      z-index: 9999;
+      flex-direction: column;
+      padding: 8px 0;
+    }
+    #mobile-nav.open { display: flex; }
+    #mobile-nav .menu-item {
+      padding: 8px 16px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: #fff;
+      text-decoration: none;
+      display: block;
+    }
+
+    /* ─── DESKTOP ───────────────────────────────────────────────── */
+    #desktop {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ─── MAC WINDOW ────────────────────────────────────────────── */
+    .mac-window {
+      border: 2px solid var(--dark);
+      box-shadow:
+        inset 2px 2px 0 rgba(255,255,255,0.6),
+        inset -2px -2px 0 var(--mid-gray),
+        4px 4px 0 var(--dark);
+      background: var(--light);
+      border-radius: 0;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .mac-window:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        inset 2px 2px 0 rgba(255,255,255,0.6),
+        inset -2px -2px 0 var(--mid-gray),
+        6px 6px 0 var(--dark);
+    }
+
+
+    .mac-titlebar {
+      color: var(--light);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--dark);
+      cursor: grab;
+      user-select: none;
+      transition: filter 0.12s;
+    }
+    .mac-titlebar:active { cursor: grabbing; }
+    .titlebar-flash { animation: titleFlash 0.7s ease; }
+    @keyframes titleFlash {
+      0%   { filter: brightness(1); }
+      30%  { filter: brightness(1.4); }
+      60%  { filter: brightness(0.9); }
+      100% { filter: brightness(1); }
+    }
+
+    .titlebar-controls { display: flex; gap: 5px; flex-shrink: 0; }
+    .ctrl-btn { width: 10px; height: 10px; border: 1px solid var(--dark); flex-shrink: 0; }
+    .ctrl-close { background: #e06c5a; }
+    .ctrl-min   { background: #e8c56d; }
+    .ctrl-zoom  { background: #788c5d; }
+    .titlebar-label { flex: 1; text-align: center; }
+
+    .win-content { padding: 20px; }
+
+    /* Alternating offsets */
+    .mac-window:nth-child(even) { margin-left: 32px; }
+    .mac-window:nth-child(odd)  { margin-right: 32px; }
+
+    /* ─── WINDOW 1: HERO ────────────────────────────────────────── */
+    .hero-split {
+      display: grid;
+      grid-template-columns: 40% 60%;
+      gap: 24px;
+      align-items: start;
+    }
+    .hero-left { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+    .avatar-block {
+      width: 96px;
+      height: 96px;
+      background: var(--light-gray);
+      border: 4px solid var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 18px;
+      color: var(--orange);
+      image-rendering: pixelated;
+    }
+    .hero-links { display: flex; flex-direction: column; gap: 7px; width: 100%; }
+    .hero-link-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      background: var(--orange);
+      color: var(--light);
+      border: 1px solid var(--dark);
+      padding: 6px 8px;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      line-height: 1.6;
+      transition: background 0.12s, transform 0.08s;
+      word-break: break-all;
+    }
+    .hero-link-btn:hover { background: #c46a45; transform: translateY(-1px); }
+
+    .hero-right { display: flex; flex-direction: column; gap: 12px; }
+    .hero-name {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 30px;
+      color: var(--dark);
+      line-height: 1.1;
+    }
+    .hero-title {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 16px;
+      color: var(--orange);
+    }
+    .hero-location {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--light-gray);
+      border: 1px solid var(--dark);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      padding: 5px 8px;
+      color: var(--dark);
+    }
+    .hero-bio {
+      font-family: 'Lora', serif;
+      font-size: 13px;
+      color: var(--dark);
+      line-height: 1.7;
+      min-height: 80px;
+    }
+    .bio-cursor {
+      display: inline-block;
+      width: 9px;
+      height: 13px;
+      background: var(--orange);
+      vertical-align: middle;
+      margin-left: 2px;
+      animation: cursorBlink 0.6s step-end infinite;
+    }
+    .hero-tagline {
+      display: inline-block;
+      background: var(--blue);
+      color: var(--light);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      padding: 6px 10px;
+      line-height: 1.7;
+    }
+
+    /* ─── WINDOW 2: EXPERIENCE ──────────────────────────────────── */
+    .timeline { position: relative; padding-left: 32px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: var(--blue);
+    }
+    .timeline-entry {
+      position: relative;
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px dashed var(--light-gray);
+    }
+    .timeline-entry:last-child { border-bottom: none; margin-bottom: 0; }
+    .timeline-node {
+      position: absolute;
+      left: -29px;
+      top: 4px;
+      width: 12px;
+      height: 12px;
+    }
+    .timeline-node.recent { background: var(--orange); border: 1px solid var(--dark); }
+    .timeline-node.older  { background: var(--blue);   border: 1px solid var(--dark); }
+    .timeline-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+    .timeline-company {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--dark);
+    }
+    .timeline-role {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: var(--mid-gray);
+    }
+    .timeline-date {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      background: var(--orange);
+      color: var(--light);
+      padding: 4px 8px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+    .timeline-bullets { list-style: none; margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+    .timeline-bullets li {
+      font-family: 'Lora', serif;
+      font-size: 13px;
+      color: var(--dark);
+      line-height: 1.6;
+      padding-left: 16px;
+      position: relative;
+    }
+    .timeline-bullets li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--blue);
+    }
+
+    /* ─── WINDOW 3: PROJECTS ────────────────────────────────────── */
+    .win-projects { position: relative; border-left: 6px solid var(--orange); }
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .project-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      position: relative;
+    }
+    .project-icon {
+      width: 72px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--dark);
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .project-icon-inner {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 16px;
+      color: rgba(255,255,255,0.8);
+    }
+    .project-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: var(--dark);
+      text-align: center;
+      line-height: 1.8;
+    }
+    .project-card:hover .project-icon {
+      box-shadow: 4px 4px 0 var(--dark);
+      animation: jiggle 0.1s ease-in-out;
+    }
+    @keyframes jiggle {
+      0%   { transform: translateX(0)    scale(1); }
+      25%  { transform: translateX(-2px) scale(1.08); }
+      75%  { transform: translateX(2px)  scale(1.08); }
+      100% { transform: translateX(0)    scale(1.08); }
+    }
+    .project-card:hover .project-icon { transform: scale(1.08); }
+
+    .project-overlay {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      width: 220px;
+      background: var(--light);
+      border: 2px solid var(--dark);
+      box-shadow: 4px 4px 0 var(--dark);
+      padding: 10px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .project-card:hover .project-overlay {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(82px);
+    }
+    .overlay-desc {
+      font-family: 'Lora', serif;
+      font-size: 11px;
+      color: var(--dark);
+      line-height: 1.5;
+      margin-bottom: 7px;
+    }
+    .overlay-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 5px;
+      background: var(--orange);
+      color: var(--light);
+      padding: 3px 5px;
+      border: 1px solid var(--dark);
+      display: inline-block;
+      margin-bottom: 7px;
+      line-height: 1.6;
+    }
+    .overlay-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .overlay-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 5px;
+      background: var(--light-gray);
+      border: 1px solid var(--dark);
+      padding: 3px 5px;
+      color: var(--dark);
+    }
+    .overlay-open {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      background: var(--orange);
+      color: var(--light);
+      border: 1px solid var(--dark);
+      padding: 5px 8px;
+      cursor: pointer;
+      display: block;
+      text-align: center;
+      transition: background 0.1s;
+      text-decoration: none;
+    }
+    .overlay-open:hover { background: #c46a45; }
+
+    /* ─── WINDOW 4: SKILLS ──────────────────────────────────────── */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .skills-left h3, .skills-right h3 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--orange);
+      margin-bottom: 14px;
+      letter-spacing: 0.5px;
+    }
+    .skill-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .skill-bar-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--dark);
+      width: 82px;
+      flex-shrink: 0;
+    }
+    .skill-bar-track {
+      flex: 1;
+      height: 12px;
+      background: var(--light-gray);
+      border: 1px solid var(--mid-gray);
+      overflow: hidden;
+      position: relative;
+    }
+    .skill-bar-fill {
+      height: 100%;
+      background: var(--orange);
+      width: 0%;
+      transition: width 1.2s ease;
+    }
+    .skill-bar-pct {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: var(--mid-gray);
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .skill-group { margin-bottom: 14px; }
+    .skill-group-label {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--orange);
+      letter-spacing: 1px;
+      margin-bottom: 7px;
+    }
+    .skill-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .skill-chip {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 5px;
+      padding: 4px 7px;
+      border: 1px solid var(--dark);
+      color: var(--dark);
+      line-height: 1.5;
+    }
+
+    /* ─── WINDOW 5: EDUCATION ───────────────────────────────────── */
+    .edu-entries { display: flex; flex-direction: column; gap: 16px; }
+    .edu-card {
+      border-left: 4px solid var(--green);
+      padding: 12px 14px;
+      background: rgba(120,140,93,0.04);
+    }
+    .edu-degree {
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--dark);
+    }
+    .edu-school {
+      font-family: 'Lora', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: var(--green);
+      margin-top: 2px;
+    }
+    .edu-meta {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: var(--mid-gray);
+      margin-top: 6px;
+      line-height: 1.8;
+    }
+    .edu-courses {
+      font-family: 'Lora', serif;
+      font-size: 12px;
+      color: var(--mid-gray);
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+    .cert-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--light-gray);
+    }
+    .cert-chip {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 5px;
+      background: var(--green);
+      color: var(--light);
+      padding: 5px 9px;
+      border-radius: 100px;
+      border: 1px solid var(--dark);
+      line-height: 1.7;
+    }
+
+    /* ─── WINDOW 6: CONTACT ─────────────────────────────────────── */
+    .contact-form { display: flex; flex-direction: column; gap: 10px; }
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .form-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 7px;
+      color: var(--dark);
+      width: 56px;
+      flex-shrink: 0;
+    }
+    .form-input {
+      flex: 1;
+      font-family: 'Lora', serif;
+      font-size: 13px;
+      background: var(--light);
+      border: 1px solid var(--dark);
+      box-shadow: inset 1px 1px 0 var(--light);
+      padding: 8px 10px;
+      color: var(--dark);
+      outline: none;
+      transition: border-color 0.12s;
+    }
+    .form-input:focus { border-color: var(--orange); }
+    .form-textarea {
+      flex: 1;
+      font-family: 'Lora', serif;
+      font-size: 13px;
+      background: var(--light);
+      border: 1px solid var(--dark);
+      box-shadow: inset 1px 1px 0 var(--light);
+      padding: 8px 10px;
+      color: var(--dark);
+      min-height: 200px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.12s;
+    }
+    .form-textarea:focus { border-color: var(--orange); }
+    .form-row.textarea-row { align-items: flex-start; }
+    .send-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      background: var(--orange);
+      color: var(--light);
+      border: 2px solid var(--dark);
+      padding: 12px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.12s, transform 0.08s;
+      letter-spacing: 0.5px;
+    }
+    .send-btn:hover { background: #c46a45; transform: translateY(-1px); }
+    .send-btn:active { transform: translateY(1px); }
+    .contact-footer {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--light-gray);
+    }
+    .footer-link {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      background: var(--blue);
+      color: var(--light);
+      border: 1px solid var(--dark);
+      padding: 6px 10px;
+      text-decoration: none;
+      transition: background 0.1s, transform 0.08s;
+    }
+    .footer-link:hover { background: #5a8ab8; transform: translateY(-1px); }
+
+
+    /* ─── COLLAPSIBLE TIMELINE ──────────────────────────────────── */
+    .timeline-toggle {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px;
+      cursor: pointer;
+      padding: 4px 0;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      transition: background 0.1s;
+      border-radius: 0;
+    }
+    .timeline-toggle:hover { background: rgba(217,119,87,0.06); }
+    .timeline-chevron {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--blue);
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+      margin-left: auto;
+      margin-right: 4px;
+    }
+    .timeline-entry.open .timeline-chevron { transform: rotate(90deg); }
+    .timeline-bullets.collapsed {
+      display: none;
+    }
+    .timeline-bullets {
+      margin-top: 8px;
+      animation: slideDown 0.2s ease-out;
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── RESPONSIVE ────────────────────────────────────────────── */
+    @media (max-width: 1023px) {
+      #desktop { max-width: 92%; }
+      .mac-window:nth-child(even) { margin-left: 0; }
+      .mac-window:nth-child(odd)  { margin-right: 0; }
+    }
+
+    @media (max-width: 767px) {
+      #desktop { padding: 16px 10px 40px; gap: 20px; }
+      .menu-left .menu-item { display: none; }
+      #hamburger { display: block; }
+      .hero-split { grid-template-columns: 1fr; }
+      .hero-left { align-items: flex-start; }
+      .skills-grid { grid-template-columns: 1fr; }
+      .projects-grid { grid-template-columns: repeat(3, 1fr); }
+      .mac-window:nth-child(even),
+      .mac-window:nth-child(odd) { margin-left: 0; margin-right: 0; }
+      .project-overlay { width: 160px; font-size: 9px; }
+      .hero-name { font-size: 22px; }
+      .timeline-date { margin-left: 0; }
+    }
+
+    @media (max-width: 480px) {
+      .projects-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-row { flex-direction: column; align-items: flex-start; }
+      .form-label { width: auto; }
+      .form-input, .form-textarea { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+<!-- ─── BOOT SCREEN ─────────────────────────────────────────────── -->
+<div id="boot-screen" role="status" aria-label="Loading Bryan OS">
+  <div class="boot-mac-face">
+    <div class="boot-eyes">
+      <div class="boot-eye"></div>
+      <div class="boot-eye"></div>
+    </div>
+    <div class="boot-smile"></div>
+  </div>
+  <div class="boot-title">Bryan OS v4.0</div>
+  <div class="boot-loading-text">Loading...</div>
+  <div class="boot-bar-track"><div class="boot-bar-fill"></div></div>
+</div>
+
+<!-- ─── MENU BAR ────────────────────────────────────────────────── -->
+<header id="menu-bar" role="navigation" aria-label="Main navigation">
+  <nav class="menu-left">
+    <span class="menu-logo">■</span>
+    <a class="menu-item" href="#" aria-label="Home">File</a>
+    <a class="menu-item" href="#win-hero" aria-label="About section">About</a>
+    <a class="menu-item" href="#win-education" aria-label="Education section">Education</a>
+    <a class="menu-item" href="#win-experience" aria-label="Experience section">Work</a>
+    <a class="menu-item" href="#win-founder" aria-label="Ventures section">Ventures</a>
+    <a class="menu-item" href="#win-projects" aria-label="Projects section">Projects</a>
+    <a class="menu-item" href="#win-contact" aria-label="Contact section">Contact</a>
+  </nav>
+  <button id="hamburger" aria-label="Open navigation menu">≡</button>
+  <div class="menu-right">
+    <span id="menu-clock">00:00:00 AM</span>
+    <span class="cursor-blink" aria-hidden="true"></span>
+  </div>
+</header>
+
+<!-- Mobile nav -->
+<nav id="mobile-nav" aria-label="Mobile navigation">
+  <a class="menu-item" href="#win-hero">About</a>
+  <a class="menu-item" href="#win-education">Education</a>
+  <a class="menu-item" href="#win-experience">Work</a>
+  <a class="menu-item" href="#win-founder">Ventures</a>
+  <a class="menu-item" href="#win-projects">Projects</a>
+  <a class="menu-item" href="#win-skills">Skills</a>
+  <a class="menu-item" href="#win-contact">Contact</a>
+</nav>
+
+<!-- ─── DESKTOP ─────────────────────────────────────────────────── -->
+<main id="desktop" role="main">
+
+
+  <!-- WINDOW 01: HERO -->
+  <section class="mac-window" id="win-hero" data-screen-label="01 Hero">
+    <div class="mac-titlebar" style="background: var(--orange);" data-section="win-hero">
+      <div class="titlebar-controls">
+        <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-min" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-zoom" aria-hidden="true"></div>
+      </div>
+      <span class="titlebar-label">▌ About_Me.txt</span>
+    </div>
+    <div class="win-content">
+      <div class="hero-split">
+        <div class="hero-left">
+          <div class="avatar-block" aria-label="Initials BV">BV</div>
+          <div class="hero-links">
+            <a class="hero-link-btn" href="mailto:bryanedinson1998@hotmail.com" aria-label="Email Bryan">📧 bryanedinson1998@hotmail.com</a>
+            <a class="hero-link-btn" href="https://linkedin.com/in/bryanedinsonvelan" target="_blank" rel="noopener" aria-label="LinkedIn profile">🔗 linkedin.com/in/bryanedinsonvelan</a>
+            <a class="hero-link-btn" href="https://github.com/bryanvela98" target="_blank" rel="noopener" aria-label="GitHub profile">&lt;/&gt; github.com/bryanvela98</a>
+          </div>
+        </div>
+        <div class="hero-right">
+          <h1 class="hero-name">BRYAN E. VELA</h1>
+          <p class="hero-title">Software Engineer · ML/AI Engineer</p>
+          <span class="hero-location">📍 Halifax, NS · Canada</span>
+          <p class="hero-bio" id="hero-bio-text" aria-live="polite"><span class="bio-cursor"></span></p>
+          <span class="hero-tagline">"Building systems that work in the real world."</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WINDOW 02: EDUCATION -->
+  <section class="mac-window" id="win-education" data-screen-label="02 Education">
+    <div class="mac-titlebar" style="background: var(--green);" data-section="win-education">
+      <div class="titlebar-controls">
+        <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-min" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-zoom" aria-hidden="true"></div>
+      </div>
+      <span class="titlebar-label">▌ Education.app</span>
+    </div>
+    <!-- 8-BIT RUNNER EDU -->
+    <div id="edu-runner-container" style="position:relative;background:#f5ede6;border-bottom:2px solid var(--dark);overflow:hidden;height:160px;">
+      <canvas id="edu-runner-canvas" width="860" height="160" style="display:block;width:100%;height:160px;image-rendering:pixelated;"></canvas>
+      <div id="edu-trophy-popup" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--light);border:2px solid var(--dark);box-shadow:3px 3px 0 var(--dark);padding:8px 14px;text-align:center;z-index:10;min-width:200px;">
+        <div id="edu-trophy-icon" style="font-size:22px;line-height:1;">🎓</div>
+        <div id="edu-trophy-title" style="font-family:'Press Start 2P',monospace;font-size:6px;color:var(--green);margin-top:5px;line-height:1.7;"></div>
+        <div id="edu-trophy-date" style="font-family:'Press Start 2P',monospace;font-size:5px;color:var(--mid-gray);margin-top:3px;"></div>
+      </div>
+      <button id="edu-runner-replay" aria-label="Replay education timeline" style="position:absolute;bottom:8px;right:10px;font-family:'Press Start 2P',monospace;font-size:6px;background:var(--green);color:var(--light);border:1px solid var(--dark);padding:5px 8px;cursor:pointer;display:none;">↺ REPLAY</button>
+    </div>
+    <div class="win-content">
+      <div class="edu-entries">
+
+        <div class="edu-card">
+          <div class="edu-degree">M.Sc. Applied Computer Science</div>
+          <div class="edu-school">Dalhousie University</div>
+          <div class="edu-meta">📍 Halifax, Canada · Sep 2025 – Present · GPA: 4.0 / 4.3</div>
+          <div class="edu-courses">NLP with Deep Learning · Recommender Systems · Machine Learning · Adv. Cloud Computing · Deep Learning Applications</div>
+        </div>
+
+        <div class="edu-card">
+          <div class="edu-degree">B.Sc. Mechatronics Engineering</div>
+          <div class="edu-school">Pontifical Catholic University of Peru (PUCP)</div>
+          <div class="edu-meta">📍 Lima, Peru · Jun 2022</div>
+          <div class="edu-courses">Algorithms & Data Structures · OOP · Operating Systems · Control Systems · Autonomous Driving</div>
+        </div>
+
+        <div class="edu-card">
+          <div class="edu-degree">Diploma in Software Development</div>
+          <div class="edu-school">Coderhouse</div>
+          <div class="edu-meta">📍 Buenos Aires, Argentina · May 2025</div>
+          <div class="edu-courses">Advanced Backend I/II/III · Software Architecture · React.js · Next.js · Scrum · QA Testing</div>
+        </div>
+
+      </div>
+
+      <div class="cert-row" role="list" aria-label="Certifications">
+        <span class="cert-chip" role="listitem">AWS AI/ML Micromaster</span>
+        <span class="cert-chip" role="listitem">DeepLearning.AI ML Specialization</span>
+        <span class="cert-chip" role="listitem">Azure AI Engineer Associate</span>
+        <span class="cert-chip" role="listitem">Salesforce AI Associate</span>
+        <span class="cert-chip" role="listitem">Advanced Java Bootcamp</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- WINDOW 03: EXPERIENCE -->
+  <section class="mac-window" id="win-experience" data-screen-label="03 Experience">
+    <div class="mac-titlebar" style="background: var(--blue);" data-section="win-experience">
+      <div class="titlebar-controls">
+        <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-min" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-zoom" aria-hidden="true"></div>
+      </div>
+      <span class="titlebar-label">▌ Work_History.doc</span>
+    </div>
+    <div class="win-content">
+      <nav class="timeline" aria-label="Work experience timeline">
+
+        <article class="timeline-entry">
+          <div class="timeline-node recent" aria-hidden="true"></div>
+          <button class="timeline-toggle" aria-expanded="false">
+            <span class="timeline-company">NTT DATA</span>
+            <span class="timeline-role">Software Engineer, ML/AI Integration</span>
+            <span class="timeline-date">Sep 2024 – Oct 2025</span>
+            <span class="timeline-chevron" aria-hidden="true">▸</span>
+          </button>
+          <ul class="timeline-bullets collapsed">
+            <li>Integrated TensorFlow ML models into microservices for a $1M fraud detection platform (Scotiabank) — 30% boost in fraud recovery.</li>
+            <li>Contributed to $800K intelligent conversational-agent platform for the Peruvian Government.</li>
+            <li>Designed RESTful API architecture bridging ML inference layers with Java/Python services.</li>
+          </ul>
+        </article>
+
+        <article class="timeline-entry">
+          <div class="timeline-node recent" aria-hidden="true"></div>
+          <button class="timeline-toggle" aria-expanded="false">
+            <span class="timeline-company">Outlier AI</span>
+            <span class="timeline-role">AI Engineer, RLHF</span>
+            <span class="timeline-date">Jan 2024 – Aug 2025</span>
+            <span class="timeline-chevron" aria-hidden="true">▸</span>
+          </button>
+          <ul class="timeline-bullets collapsed">
+            <li>Built RLHF evaluation pipelines to fine-tune LLMs across NLP, CV, and Sentiment Analysis tasks.</li>
+          </ul>
+        </article>
+
+        <article class="timeline-entry">
+          <div class="timeline-node older" aria-hidden="true"></div>
+          <button class="timeline-toggle" aria-expanded="false">
+            <span class="timeline-company">AGP 2.0 (Tesla Supplier)</span>
+            <span class="timeline-role">Software Engineer, Automation & AI</span>
+            <span class="timeline-date">Sep 2023 – Sep 2024</span>
+            <span class="timeline-chevron" aria-hidden="true">▸</span>
+          </button>
+          <ul class="timeline-bullets collapsed">
+            <li>Computer vision ML model for windshield defect detection — 80% accuracy improvement, zero manual inspection.</li>
+            <li>AI-powered automation software cutting processing times by 80%; IoT-integrated dashboard improving response by 45%.</li>
+          </ul>
+        </article>
+
+        <article class="timeline-entry">
+          <div class="timeline-node older" aria-hidden="true"></div>
+          <button class="timeline-toggle" aria-expanded="false">
+            <span class="timeline-company">Stracon</span>
+            <span class="timeline-role">Software Engineer, Backend Systems</span>
+            <span class="timeline-date">Jan 2023 – Sep 2023</span>
+            <span class="timeline-chevron" aria-hidden="true">▸</span>
+          </button>
+          <ul class="timeline-bullets collapsed">
+            <li>Algorithmic shipping-date optimization software (Python/Java) — 35% reduction in transportation costs.</li>
+          </ul>
+        </article>
+
+        <article class="timeline-entry">
+          <div class="timeline-node older" aria-hidden="true"></div>
+          <button class="timeline-toggle" aria-expanded="false">
+            <span class="timeline-company">Yanbal</span>
+            <span class="timeline-role">App Development Intern</span>
+            <span class="timeline-date">Jun 2022 – Oct 2022</span>
+            <span class="timeline-chevron" aria-hidden="true">▸</span>
+          </button>
+          <ul class="timeline-bullets collapsed">
+            <li>React.js + Node.js + Three.js analytics dashboard; Flutter mobile app for remote equipment tracking.</li>
+          </ul>
+        </article>
+
+        <article class="timeline-entry">
+          <div class="timeline-node older" aria-hidden="true"></div>
+          <button class="timeline-toggle" aria-expanded="false">
+            <span class="timeline-company">Trianon</span>
+            <span class="timeline-role">IoT Engineer</span>
+            <span class="timeline-date">Jan 2022 – May 2022</span>
+            <span class="timeline-chevron" aria-hidden="true">▸</span>
+          </button>
+          <ul class="timeline-bullets collapsed">
+            <li>Full IoT system from C/C++ firmware (GSM/GPRS, Zigbee) through custom application scripts.</li>
+          </ul>
+        </article>
+
+        <article class="timeline-entry">
+          <div class="timeline-node older" aria-hidden="true"></div>
+          <button class="timeline-toggle" aria-expanded="false">
+            <span class="timeline-company">Greenbird.io</span>
+            <span class="timeline-role">Software Engineer, Firmware & ML</span>
+            <span class="timeline-date">Mar 2021 – Dec 2021</span>
+            <span class="timeline-chevron" aria-hidden="true">▸</span>
+          </button>
+          <ul class="timeline-bullets collapsed">
+            <li>Firmware and ML data-logging for precision agriculture (Raspberry Pi, ESP32, Arduino) — 40% reduction in packet loss.</li>
+          </ul>
+        </article>
+
+      </nav>
+    </div>
+  </section>
+
+  <!-- WINDOW 04: VENTURES -->
+  <section class="mac-window" id="win-founder" data-screen-label="04 Ventures">
+    <div class="mac-titlebar" style="background: var(--orange);" data-section="win-founder">
+      <div class="titlebar-controls">
+        <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-min" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-zoom" aria-hidden="true"></div>
+      </div>
+      <span class="titlebar-label">▌ Entrepreneurship_Experience.txt</span>
+    </div>
+    <div class="win-content">
+
+      <div style="border:2px solid var(--dark);background:var(--light);box-shadow:3px 3px 0 var(--dark);padding:18px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;bottom:0;width:6px;background:var(--orange);"></div>
+        <div style="padding-left:14px;">
+          <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:8px;">
+            <a href="https://www.legalhound.ai/" target="_blank" rel="noopener" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:20px;color:var(--dark);text-decoration:none;border-bottom:2px solid var(--orange);">LegalHound ↗</a>
+            <span style="font-family:'Lora',serif;font-style:italic;font-size:13px;color:var(--mid-gray);">Principal Software / AI Engineer</span>
+            <span style="margin-left:auto;font-family:'Press Start 2P',monospace;font-size:6px;background:var(--orange);color:var(--light);padding:4px 8px;border-radius:100px;border:1px solid var(--dark);white-space:nowrap;">Oct 2025 – May 2026</span>
+          </div>
+          <p style="font-family:'Lora',serif;font-size:13px;color:var(--mid-gray);line-height:1.6;margin-bottom:14px;">
+            AI-powered legal SaaS for debt-collection law firms — reducing demand letter drafting from ~2 hours to ~5 minutes.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+            <div style="background:rgba(217,119,87,0.10);border:1px solid var(--orange);padding:10px;text-align:center;">
+              <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--orange);margin-bottom:4px;">24×</div>
+              <div style="font-family:'Lora',serif;font-size:11px;color:var(--dark);">faster drafting</div>
+            </div>
+            <div style="background:rgba(217,119,87,0.10);border:1px solid var(--orange);padding:10px;text-align:center;">
+              <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--orange);margin-bottom:4px;">~5 min</div>
+              <div style="font-family:'Lora',serif;font-size:11px;color:var(--dark);">vs. ~2 hrs</div>
+            </div>
+            <div style="background:rgba(217,119,87,0.10);border:1px solid var(--orange);padding:10px;text-align:center;">
+              <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--orange);margin-bottom:4px;">AI</div>
+              <div style="font-family:'Lora',serif;font-size:11px;color:var(--dark);">powered pipeline</div>
+            </div>
+          </div>
+          <ul class="timeline-bullets" style="margin-top:0;">
+            <li>FastAPI + SQLAlchemy backend with RBAC, custom portal URLs, full approval workflows; React + TypeScript frontend.</li>
+            <li>RAG pipeline over multimodal inputs (PDF/DOCX/image) — Gemini embeddings, cosine-similarity retrieval, Pydantic output validation.</li>
+            <li>Contributed to end-to-end delivery: backend architecture, AI pipeline integration, and client-facing workflows.</li>
+          </ul>
+          <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:5px;">
+            <span style="font-family:'Press Start 2P',monospace;font-size:5px;background:rgba(217,119,87,0.15);border:1px solid var(--dark);padding:4px 7px;color:var(--dark);">FastAPI</span>
+            <span style="font-family:'Press Start 2P',monospace;font-size:5px;background:rgba(217,119,87,0.15);border:1px solid var(--dark);padding:4px 7px;color:var(--dark);">React</span>
+            <span style="font-family:'Press Start 2P',monospace;font-size:5px;background:rgba(217,119,87,0.15);border:1px solid var(--dark);padding:4px 7px;color:var(--dark);">TypeScript</span>
+            <span style="font-family:'Press Start 2P',monospace;font-size:5px;background:rgba(217,119,87,0.15);border:1px solid var(--dark);padding:4px 7px;color:var(--dark);">RAG</span>
+            <span style="font-family:'Press Start 2P',monospace;font-size:5px;background:rgba(217,119,87,0.15);border:1px solid var(--dark);padding:4px 7px;color:var(--dark);">Gemini</span>
+            <span style="font-family:'Press Start 2P',monospace;font-size:5px;background:rgba(217,119,87,0.15);border:1px solid var(--dark);padding:4px 7px;color:var(--dark);">PostgreSQL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WINDOW 05: PROJECTS -->
+  <section class="mac-window win-projects" id="win-projects" data-screen-label="05 Projects">
+    <div class="mac-titlebar" style="background: var(--dark);" data-section="win-projects">
+      <div class="titlebar-controls">
+        <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-min" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-zoom" aria-hidden="true"></div>
+      </div>
+      <span class="titlebar-label">▌ Projects.folder</span>
+    </div>
+    <div class="win-content">
+      <div class="projects-grid" role="list">
+
+        <!-- SapientIA -->
+        <div class="project-card" role="listitem" tabindex="0" aria-label="SapientIA project">
+          <div class="project-icon" style="background:var(--orange);"><span class="project-icon-inner">S</span></div>
+          <div class="project-name">SapientIA</div>
+          <div class="project-overlay" aria-hidden="true">
+            <div class="overlay-badge">🏆 TOP 2% · Build with Claude 2026</div>
+            <div class="overlay-desc">Inclusive Socratic AI Tutor — 4 accessibility profiles, Web Speech API, WCAG, 144 tests.</div>
+            <div class="overlay-tags"><span class="overlay-tag">TypeScript</span><span class="overlay-tag">FastAPI</span><span class="overlay-tag">React 19</span><span class="overlay-tag">Anthropic SDK</span></div>
+            <a class="overlay-open" href="https://github.com/bryanvela98/SapientIA" target="_blank" rel="noopener">Open ▶</a>
+          </div>
+        </div>
+
+        <!-- Wrench Board -->
+        <div class="project-card" role="listitem" tabindex="0" aria-label="Wrench Board project">
+          <div class="project-icon" style="background:#5a3a1a;"><span class="project-icon-inner" style="color:#e8c56d;">W</span></div>
+          <div class="project-name">Wrench Board</div>
+          <div class="project-overlay" aria-hidden="true">
+            <div class="overlay-badge">🥈 2nd Place · Build with Opus 4.7</div>
+            <div class="overlay-desc">Agent-native board-level electronics diagnostic workbench. 36 tools, anti-hallucination, boardview parsers.</div>
+            <div class="overlay-tags"><span class="overlay-tag">FastAPI</span><span class="overlay-tag">Claude Opus</span><span class="overlay-tag">Managed Agents</span><span class="overlay-tag">D3.js</span></div>
+            <a class="overlay-open" href="https://github.com/bryanvela98/aitechie" target="_blank" rel="noopener">Open ▶</a>
+          </div>
+        </div>
+
+        <!-- LegalHound -->
+        <div class="project-card" role="listitem" tabindex="0" aria-label="LegalHound SaaS project">
+          <div class="project-icon" style="background:var(--blue);"><span class="project-icon-inner">L</span></div>
+          <div class="project-name">LegalHound SaaS</div>
+          <div class="project-overlay" aria-hidden="true">
+            <div class="overlay-desc">Multi-tenant legal SaaS — 24× faster demand letter generation via AI pipeline.</div>
+            <div class="overlay-tags"><span class="overlay-tag">FastAPI</span><span class="overlay-tag">RAG</span><span class="overlay-tag">Gemini</span><span class="overlay-tag">PostgreSQL</span></div>
+            <a class="overlay-open" href="https://www.legalhound.ai/" target="_blank" rel="noopener">Open ▶</a>
+          </div>
+        </div>
+
+        <!-- Biblionomics -->
+        <div class="project-card" role="listitem" tabindex="0" aria-label="Biblionomics Enrich project">
+          <div class="project-icon" style="background:var(--green);"><span class="project-icon-inner">B</span></div>
+          <div class="project-name">Biblionomics</div>
+          <div class="project-overlay" aria-hidden="true">
+            <div class="overlay-desc">Serverless bibliographic metadata enrichment — 65% faster than batch.</div>
+            <div class="overlay-tags"><span class="overlay-tag">AWS Lambda</span><span class="overlay-tag">Step Functions</span><span class="overlay-tag">DynamoDB</span><span class="overlay-tag">React</span></div>
+            <a class="overlay-open" href="https://github.com/bryanvela98/biblionomicsenrich" target="_blank" rel="noopener">Open ▶</a>
+          </div>
+        </div>
+
+        <!-- DalOverflow -->
+        <div class="project-card" role="listitem" tabindex="0" aria-label="DalOverflow project">
+          <div class="project-icon" style="background:var(--mid-gray);"><span class="project-icon-inner">D</span></div>
+          <div class="project-name">DalOverflow</div>
+          <div class="project-overlay" aria-hidden="true">
+            <div class="overlay-desc">Full-stack Q&amp;A platform for Dalhousie — AI-powered answer generation. Backend Lead.</div>
+            <div class="overlay-tags"><span class="overlay-tag">Flask</span><span class="overlay-tag">React</span><span class="overlay-tag">PostgreSQL</span><span class="overlay-tag">Gemini</span></div>
+            <a class="overlay-open" href="https://daloverflow.vercel.app/" target="_blank" rel="noopener">Open ▶</a>
+          </div>
+        </div>
+
+        <!-- MealResQ -->
+        <div class="project-card" role="listitem" tabindex="0" aria-label="MealResQ project">
+          <div class="project-icon" style="background:#e8a98a;"><span class="project-icon-inner" style="color:var(--dark);">M</span></div>
+          <div class="project-name">MealResQ</div>
+          <div class="project-overlay" aria-hidden="true">
+            <div class="overlay-badge">🏆 RBC Hackathon 2025</div>
+            <div class="overlay-desc">Real-time food rescue platform — live driver tracking, event-driven architecture.</div>
+            <div class="overlay-tags"><span class="overlay-tag">Flask</span><span class="overlay-tag">Firebase</span><span class="overlay-tag">WebSockets</span><span class="overlay-tag">React</span></div>
+            <a class="overlay-open" href="https://github.com/bryanvela98/IdeaVolution" target="_blank" rel="noopener">Open ▶</a>
+          </div>
+        </div>
+
+        <!-- GPT from Scratch -->
+        <div class="project-card" role="listitem" tabindex="0" aria-label="GPT from Scratch project">
+          <div class="project-icon" style="background:#2a2a3e;"><span class="project-icon-inner" style="color:#a0c4ff;">G</span></div>
+          <div class="project-name">GPT from Scratch</div>
+          <div class="project-overlay" aria-hidden="true">
+            <div class="overlay-desc">Decoder-only Transformer from scratch — BPE tokenizer, multi-head attention, trained on Shakespeare.</div>
+            <div class="overlay-tags"><span class="overlay-tag">PyTorch</span><span class="overlay-tag">Python</span><span class="overlay-tag">NLP</span><span class="overlay-tag">Transformers</span></div>
+            <a class="overlay-open" href="https://github.com/bryanvela98/gtpfromscratch" target="_blank" rel="noopener">Open ▶</a>
+          </div>
+        </div>
+
+        <!-- COVID-19 Mapper -->
+        <div class="project-card" role="listitem" tabindex="0" aria-label="COVID-19 Mapper project">
+          <div class="project-icon" style="background:var(--dark);"><span class="project-icon-inner" style="color:var(--orange);">C</span></div>
+          <div class="project-name">COVID-19 Mapper</div>
+          <div class="project-overlay" aria-hidden="true">
+            <div class="overlay-desc">Epidemiological tracking for Lima districts — real-time data visualization.</div>
+            <div class="overlay-tags"><span class="overlay-tag">C++</span><span class="overlay-tag">SQL Server</span><span class="overlay-tag">MVC</span></div>
+            <a class="overlay-open" href="https://github.com/bryanvela98/covidlimamap" target="_blank" rel="noopener">Open ▶</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- WINDOW 06: SKILLS -->
+  <section class="mac-window" id="win-skills" data-screen-label="06 Skills">
+    <div class="mac-titlebar" style="background: var(--orange);" data-section="win-skills">
+      <div class="titlebar-controls">
+        <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-min" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-zoom" aria-hidden="true"></div>
+      </div>
+      <span class="titlebar-label">▌ System_Info.app</span>
+    </div>
+    <div class="win-content">
+      <div class="skills-grid">
+        <div class="skills-left">
+          <h3>LANGUAGES</h3>
+          <div class="skill-bar-row">
+            <span class="skill-bar-label">Python</span>
+            <div class="skill-bar-track" role="progressbar" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100" aria-label="Python 90%"><div class="skill-bar-fill" data-width="90"></div></div>
+            <span class="skill-bar-pct">90%</span>
+          </div>
+          <div class="skill-bar-row">
+            <span class="skill-bar-label">TypeScript</span>
+            <div class="skill-bar-track" role="progressbar" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100" aria-label="TypeScript 82%"><div class="skill-bar-fill" data-width="82"></div></div>
+            <span class="skill-bar-pct">82%</span>
+          </div>
+          <div class="skill-bar-row">
+            <span class="skill-bar-label">Java</span>
+            <div class="skill-bar-track" role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100" aria-label="Java 78%"><div class="skill-bar-fill" data-width="78"></div></div>
+            <span class="skill-bar-pct">78%</span>
+          </div>
+          <div class="skill-bar-row">
+            <span class="skill-bar-label">C / C++</span>
+            <div class="skill-bar-track" role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100" aria-label="C and C++ 65%"><div class="skill-bar-fill" data-width="65"></div></div>
+            <span class="skill-bar-pct">65%</span>
+          </div>
+        </div>
+        <div class="skills-right">
+          <h3>TECH STACK</h3>
+          <div class="skill-group">
+            <div class="skill-group-label">AI / ML</div>
+            <div class="skill-chips">
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">RAG Pipelines</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">LLM Orchestration</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">LangChain</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">LangGraph</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">Claude Agents</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">PyTorch</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">TensorFlow</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">OpenCV</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">RLHF</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">HuggingFace</span>
+              <span class="skill-chip" style="background:rgba(106,155,204,0.20);">Gemini</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <div class="skill-group-label">Backend &amp; APIs</div>
+            <div class="skill-chips">
+              <span class="skill-chip" style="background:rgba(217,119,87,0.15);">FastAPI</span>
+              <span class="skill-chip" style="background:rgba(217,119,87,0.15);">Flask</span>
+              <span class="skill-chip" style="background:rgba(217,119,87,0.15);">Django</span>
+              <span class="skill-chip" style="background:rgba(217,119,87,0.15);">SpringBoot</span>
+              <span class="skill-chip" style="background:rgba(217,119,87,0.15);">REST API</span>
+              <span class="skill-chip" style="background:rgba(217,119,87,0.15);">JWT</span>
+              <span class="skill-chip" style="background:rgba(217,119,87,0.15);">SQLAlchemy</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <div class="skill-group-label">Cloud &amp; DevOps</div>
+            <div class="skill-chips">
+              <span class="skill-chip" style="background:rgba(120,140,93,0.18);">AWS (SAA Certified)</span>
+              <span class="skill-chip" style="background:rgba(120,140,93,0.18);">Azure (AI Eng. Certified)</span>
+              <span class="skill-chip" style="background:rgba(120,140,93,0.18);">GCP</span>
+              <span class="skill-chip" style="background:rgba(120,140,93,0.18);">Docker</span>
+              <span class="skill-chip" style="background:rgba(120,140,93,0.18);">Terraform</span>
+              <span class="skill-chip" style="background:rgba(120,140,93,0.18);">GitLab CI/CD</span>
+              <span class="skill-chip" style="background:rgba(120,140,93,0.18);">Microservices</span>
+              <span class="skill-chip" style="background:rgba(120,140,93,0.18);">WebSockets</span>
+            </div>
+          </div>
+          <div class="skill-group">
+            <div class="skill-group-label">Databases</div>
+            <div class="skill-chips">
+              <span class="skill-chip" style="background:rgba(176,174,165,0.25);">PostgreSQL</span>
+              <span class="skill-chip" style="background:rgba(176,174,165,0.25);">MySQL</span>
+              <span class="skill-chip" style="background:rgba(176,174,165,0.25);">MongoDB</span>
+              <span class="skill-chip" style="background:rgba(176,174,165,0.25);">DynamoDB</span>
+              <span class="skill-chip" style="background:rgba(176,174,165,0.25);">Firebase Firestore</span>
+              <span class="skill-chip" style="background:rgba(176,174,165,0.25);">SQL Server</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- WINDOW 07: CONTACT -->
+  <section class="mac-window" id="win-contact" data-screen-label="07 Contact">
+    <div class="mac-titlebar" style="background: var(--blue);" data-section="win-contact">
+      <div class="titlebar-controls">
+        <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-min" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-zoom" aria-hidden="true"></div>
+      </div>
+      <span class="titlebar-label">▌ New_Message.txt</span>
+    </div>
+    <div class="win-content">
+      <form class="contact-form" onsubmit="handleFormSubmit(event)" aria-label="Contact form">
+        <div class="form-row">
+          <label class="form-label" for="contact-to">To:</label>
+          <input class="form-input" id="contact-to" type="text" value="bryanedinson1998@hotmail.com" readonly style="color: var(--mid-gray);" aria-label="To address" />
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="contact-from">From:</label>
+          <input class="form-input" id="contact-from" type="email" placeholder="your@email.com" required aria-label="Your email address" />
+        </div>
+        <div class="form-row">
+          <label class="form-label" for="contact-subject">Subject:</label>
+          <input class="form-input" id="contact-subject" type="text" placeholder="Let's work together..." aria-label="Message subject" />
+        </div>
+        <div class="form-row textarea-row">
+          <label class="form-label" for="contact-body" style="padding-top: 8px;">Body:</label>
+          <textarea class="form-textarea" id="contact-body" placeholder="Write your message here..." aria-label="Message body"></textarea>
+        </div>
+        <button type="submit" class="send-btn" aria-label="Send message">✉ Send Message</button>
+      </form>
+      <div class="contact-footer" role="list" aria-label="Social links">
+        <a class="footer-link" href="https://github.com/bryanvela98" target="_blank" rel="noopener" role="listitem" aria-label="GitHub profile">[ GitHub ]</a>
+        <a class="footer-link" href="https://linkedin.com/in/bryanedinsonvelan" target="_blank" rel="noopener" role="listitem" aria-label="LinkedIn profile">[ LinkedIn ]</a>
+        <a class="footer-link" href="mailto:bryanedinson1998@hotmail.com" role="listitem" aria-label="Send email">[ Email ]</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script defer>
+  /* ─── ANIMATED BACKGROUND ────────────────────────────────────── */
+  (function() {
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let W, H;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Particle types: floating pixels, small crosses, tiny squares
+    const COLORS = ['#d97757','#6a9bcc','#788c5d','#e8c56d','#b0aea5'];
+    const COUNT = 55;
+
+    const particles = Array.from({length: COUNT}, (_, i) => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      size: Math.floor(Math.random() * 5) + 2,
+      color: COLORS[i % COLORS.length],
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: -(Math.random() * 0.4 + 0.1),
+      alpha: Math.random() * 0.4 + 0.15,
+      type: Math.floor(Math.random() * 3), // 0=square, 1=cross, 2=diamond
+      pulse: Math.random() * Math.PI * 2,
+      pulseSpeed: 0.01 + Math.random() * 0.02,
+    }));
+
+    function drawParticle(p) {
+      const a = p.alpha * (0.7 + 0.3 * Math.sin(p.pulse));
+      ctx.globalAlpha = a;
+      ctx.fillStyle = p.color;
+      if (p.type === 0) {
+        // pixel square
+        ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+      } else if (p.type === 1) {
+        // cross / plus
+        const s = p.size;
+        ctx.fillRect(Math.round(p.x), Math.round(p.y - s), s, s*3);
+        ctx.fillRect(Math.round(p.x - s), Math.round(p.y), s*3, s);
+      } else {
+        // diamond
+        const s = p.size + 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x + s/2, p.y);
+        ctx.lineTo(p.x + s, p.y + s/2);
+        ctx.lineTo(p.x + s/2, p.y + s);
+        ctx.lineTo(p.x, p.y + s/2);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Horizontal pixel scanline drifters
+    const LINES = Array.from({length: 8}, () => ({
+      y: Math.random() * window.innerHeight,
+      width: 20 + Math.random() * 80,
+      speed: 0.2 + Math.random() * 0.5,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      alpha: 0.04 + Math.random() * 0.06,
+      x: Math.random() * window.innerWidth,
+    }));
+
+    function loop() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Draw scanline drifters
+      LINES.forEach(l => {
+        ctx.globalAlpha = l.alpha;
+        ctx.fillStyle = l.color;
+        ctx.fillRect(Math.round(l.x), Math.round(l.y), l.width, 2);
+        ctx.globalAlpha = 1;
+        l.x += l.speed;
+        if (l.x > W + l.width) l.x = -l.width;
+      });
+
+      // Draw + update particles
+      particles.forEach(p => {
+        drawParticle(p);
+        p.x += p.vx;
+        p.y += p.vy;
+        p.pulse += p.pulseSpeed;
+        // Wrap
+        if (p.y < -20) { p.y = H + 10; p.x = Math.random() * W; }
+        if (p.x < -20) p.x = W + 10;
+        if (p.x > W + 20) p.x = -10;
+      });
+
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+
+  /* ─── BOOT SCREEN ─────────────────────────────────────────────── */
+  const bootScreen = document.getElementById('boot-screen');
+  setTimeout(() => {
+    bootScreen.classList.add('fade-out');
+    setTimeout(() => {
+      bootScreen.style.display = 'none';
+      // Start cascade AFTER boot screen is gone
+      startWindowCascade();
+    }, 500);
+  }, 2200);
+
+  /* ─── LIVE CLOCK ──────────────────────────────────────────────── */
+  function updateClock() {
+    const now = new Date();
+    let h = now.getHours();
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('menu-clock').textContent =
+      String(h).padStart(2, '0') + ':' + m + ':' + s + ' ' + ampm;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ─── MENU SCROLL NAV ─────────────────────────────────────────── */
+  const sectionMap = {
+    'About':      'win-hero',
+    'Education':  'win-education',
+    'Work':       'win-experience',
+    'Ventures':   'win-founder',
+    'Projects':   'win-projects',
+    'Skills':     'win-skills',
+    'Contact':    'win-contact'
+  };
+
+  document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', e => {
+      const text = item.textContent.trim();
+      const targetId = sectionMap[text];
+      if (targetId) {
+        e.preventDefault();
+        const el = document.getElementById(targetId);
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 48;
+          window.scrollTo({ top, behavior: 'smooth' });
+          // Flash title bar
+          const tb = el.querySelector('.mac-titlebar');
+          if (tb) {
+            tb.classList.remove('titlebar-flash');
+            void tb.offsetWidth; // reflow
+            tb.classList.add('titlebar-flash');
+            setTimeout(() => tb.classList.remove('titlebar-flash'), 700);
+          }
+        }
+        // Close mobile nav
+        document.getElementById('mobile-nav').classList.remove('open');
+      }
+    });
+  });
+
+  /* ─── HAMBURGER ───────────────────────────────────────────────── */
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobile-nav');
+  hamburger.addEventListener('click', () => {
+    mobileNav.classList.toggle('open');
+  });
+
+  /* ─── WINDOW CASCADE-IN + SCROLL REVEAL ──────────────────────── */
+  const windows = document.querySelectorAll('.mac-window');
+  const EAGER_COUNT = 2;
+
+  // Keep all windows invisible until cascade starts
+  windows.forEach(win => { win.style.opacity = '0'; win.style.transform = 'translateY(20px)'; });
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const win = entry.target;
+        win.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        win.style.opacity = '1';
+        win.style.transform = 'scale(1) translateY(0)';
+        revealObserver.unobserve(win);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  function startWindowCascade() {
+    windows.forEach((win, i) => {
+      if (i < EAGER_COUNT) {
+        win.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        setTimeout(() => {
+          win.style.opacity = '1';
+          win.style.transform = 'translateY(0)';
+        }, i * 120);
+      } else {
+        win.style.opacity = '0';
+        win.style.transform = 'scale(0.96) translateY(10px)';
+        setTimeout(() => revealObserver.observe(win), i * 60);
+      }
+    });
+  }
+
+  /* ─── TYPEWRITER BIO ──────────────────────────────────────────── */
+  const BIO_TEXT = "Software Engineer with 4+ years specializing in AI-integrated systems — embedding ML models, RAG pipelines, LLM-powered workflows, and intelligent agents directly into production backends. M.Sc. Applied Computer Science @ Dalhousie (GPA 4.0/4.3).";
+  const bioEl = document.getElementById('hero-bio-text');
+  let bioIdx = 0;
+  let bioStarted = false;
+
+  function typeBio() {
+    if (bioIdx <= BIO_TEXT.length) {
+      const cursor = bioEl.querySelector('.bio-cursor') || document.createElement('span');
+      cursor.className = 'bio-cursor';
+      cursor.setAttribute('aria-hidden', 'true');
+      bioEl.textContent = BIO_TEXT.slice(0, bioIdx);
+      bioEl.appendChild(cursor);
+      bioIdx++;
+      if (bioIdx <= BIO_TEXT.length) {
+        setTimeout(typeBio, 38);
+      }
+    }
+  }
+
+  // Start typewriter after boot screen
+  setTimeout(() => { if (!bioStarted) { bioStarted = true; typeBio(); } }, 2300);
+
+  /* ─── SKILL BAR ANIMATION ─────────────────────────────────────── */
+  const skillObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.skill-bar-fill').forEach(fill => {
+          const targetWidth = fill.getAttribute('data-width') + '%';
+          setTimeout(() => { fill.style.width = targetWidth; }, 200);
+        });
+        skillObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const skillsWin = document.getElementById('win-skills');
+  if (skillsWin) skillObserver.observe(skillsWin);
+
+  /* ─── CONTACT FORM ────────────────────────────────────────────── */
+  function handleFormSubmit(e) {
+    e.preventDefault();
+    const from    = document.getElementById('contact-from').value;
+    const subject = document.getElementById('contact-subject').value || '(no subject)';
+    const body    = document.getElementById('contact-body').value || '';
+    const mailto  = 'mailto:bryanedinson1998@hotmail.com'
+      + '?from=' + encodeURIComponent(from)
+      + '&subject=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(body);
+    window.location.href = mailto;
+  }
+
+  /* ─── 8-BIT RUNNER: EDUCATION ──────────────────────────────── */
+  (function() {
+    const canvas = document.getElementById('edu-runner-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const C = {
+      sky: '#f5ede6', ground: '#788c5d', groundDark: '#5a6b45',
+      grass: '#8fa870', grassLight: '#a0c080',
+      dark: '#141413', light: '#faf9f5',
+      orange: '#d97757', blue: '#6a9bcc', green: '#788c5d',
+      cloud: '#faf9f5', midGray: '#b0aea5',
+    };
+
+    const W = 860, H = 160, GROUND_Y = 118, CHAR_W = 16, CHAR_H = 20;
+
+    // Academic milestones with month+year
+    const milestones = [
+      { date: 'Jun 2022', label: 'B.Sc. Mechatronics\nPUCP',     icon: '🎓', color: C.green },
+      { date: 'May 2025', label: 'Diploma Software Dev\nCoderhouse', icon: '🎓', color: C.green },
+      { date: 'Sep 2025', label: 'M.Sc. Applied CS\nDalhousie',  icon: '🎓', color: C.green },
+    ];
+
+    const MARGIN_L = 80, MARGIN_R = 60;
+    const SPAN = W - MARGIN_L - MARGIN_R;
+    milestones.forEach((m, i) => {
+      m.x = MARGIN_L + Math.round((i / (milestones.length - 1)) * SPAN);
+    });
+
+    let charX = -CHAR_W, charY = GROUND_Y - CHAR_H, velY = 0;
+    let isJumping = false, runFrame = 0, frameTimer = 0;
+    const RUN_SPEED = 1.6, JUMP_V = -7, GRAVITY = 0.38;
+    let nextMilestoneIdx = 0, paused = false, pauseTimer = 0;
+    const PAUSE_DURATION = 2000;
+    let runDone = false;
+
+    const clouds = [
+      {x:50,y:20,w:48},{x:200,y:14,w:38},{x:380,y:26,w:56},{x:560,y:16,w:42},{x:730,y:22,w:46}
+    ];
+
+    let audioCtx2 = null;
+    function getAudio2() {
+      if (!audioCtx2) { try { audioCtx2 = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
+      return audioCtx2;
+    }
+    function beep2(freq,dur,type='square',vol=0.08){
+      const ac=getAudio2(); if(!ac) return;
+      const o=ac.createOscillator(), g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type=type; o.frequency.value=freq;
+      g.gain.setValueAtTime(vol,ac.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+dur);
+      o.start(); o.stop(ac.currentTime+dur);
+    }
+    function playJump2()   { beep2(520,0.08); setTimeout(()=>beep2(660,0.06),80); }
+    function playTrophy2() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep2(f,0.12,'square',0.1),i*90)); }
+    function playStep2()   { beep2(180,0.04,'square',0.04); }
+
+    function drawPixelRect2(x,y,w,h,color){ ctx.fillStyle=color; ctx.fillRect(Math.round(x),Math.round(y),w,h); }
+
+    function drawCloud2(cx,cy,cw){
+      const h=Math.round(cw*0.35);
+      ctx.fillStyle=C.cloud;
+      ctx.fillRect(cx,cy+h/2,cw,h/2);
+      ctx.fillRect(cx+Math.round(cw*0.15),cy,Math.round(cw*0.55),h);
+      ctx.fillStyle=C.midGray;
+      ctx.fillRect(cx,cy+h/2-1,cw,1);
+      ctx.fillRect(cx+Math.round(cw*0.15),cy-1,Math.round(cw*0.55),1);
+    }
+
+    function drawGround2(){
+      drawPixelRect2(0,GROUND_Y,W,4,C.grass);
+      drawPixelRect2(0,GROUND_Y+4,W,4,C.grassLight);
+      drawPixelRect2(0,GROUND_Y+8,W,H-GROUND_Y-8,C.groundDark);
+      ctx.fillStyle='rgba(0,0,0,0.08)';
+      for(let gx=0;gx<W;gx+=24) ctx.fillRect(gx,GROUND_Y+10,12,2);
+    }
+
+    function drawFlag2(mx,reached){
+      drawPixelRect2(mx-1,GROUND_Y-42,3,42,C.dark);
+      const fc=reached?C.green:C.midGray;
+      ctx.fillStyle=fc;
+      ctx.beginPath();
+      ctx.moveTo(mx+2,GROUND_Y-42);
+      ctx.lineTo(mx+18,GROUND_Y-35);
+      ctx.lineTo(mx+2,GROUND_Y-28);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle=C.dark; ctx.lineWidth=1; ctx.stroke();
+    }
+
+    const SKIN='#f5c9a0',SHIRT=C.green,PANTS=C.dark,SHOE='#5a3a1a',HAIR=C.dark;
+    function drawChar2(cx,cy,frame,jumping){
+      const f=Math.floor(frame)%4;
+      drawPixelRect2(cx+4,cy,8,8,SKIN);
+      drawPixelRect2(cx+4,cy,8,2,HAIR);
+      drawPixelRect2(cx+5,cy+3,2,2,C.dark);
+      drawPixelRect2(cx+9,cy+3,2,2,C.dark);
+      drawPixelRect2(cx+3,cy+8,10,6,SHIRT);
+      if(jumping){
+        drawPixelRect2(cx,cy+8,3,5,SKIN); drawPixelRect2(cx+13,cy+8,3,5,SKIN);
+      } else {
+        const ao=(f===1||f===3)?2:0;
+        drawPixelRect2(cx,cy+8+ao,3,5,SKIN); drawPixelRect2(cx+13,cy+8-ao,3,5,SKIN);
+      }
+      if(jumping){
+        drawPixelRect2(cx+3,cy+14,4,6,PANTS); drawPixelRect2(cx+9,cy+14,4,6,PANTS);
+        drawPixelRect2(cx+2,cy+19,4,3,SHOE);  drawPixelRect2(cx+10,cy+19,4,3,SHOE);
+      } else {
+        if(f===0){
+          drawPixelRect2(cx+3,cy+14,4,6,PANTS); drawPixelRect2(cx+9,cy+14,4,6,PANTS);
+          drawPixelRect2(cx+3,cy+19,4,3,SHOE);  drawPixelRect2(cx+9,cy+19,4,3,SHOE);
+        } else if(f===1){
+          drawPixelRect2(cx+3,cy+14,4,8,PANTS); drawPixelRect2(cx+9,cy+12,4,6,PANTS);
+          drawPixelRect2(cx+3,cy+21,5,3,SHOE);  drawPixelRect2(cx+9,cy+17,4,3,SHOE);
+        } else if(f===2){
+          drawPixelRect2(cx+3,cy+14,4,6,PANTS); drawPixelRect2(cx+9,cy+14,4,6,PANTS);
+          drawPixelRect2(cx+3,cy+19,5,3,SHOE);  drawPixelRect2(cx+9,cy+19,4,3,SHOE);
+        } else {
+          drawPixelRect2(cx+3,cy+12,4,6,PANTS); drawPixelRect2(cx+9,cy+14,4,8,PANTS);
+          drawPixelRect2(cx+3,cy+17,4,3,SHOE);  drawPixelRect2(cx+9,cy+21,5,3,SHOE);
+        }
+      }
+    }
+
+    let stars2 = [];
+    function spawnStars2(x,y){
+      for(let i=0;i<12;i++){
+        const angle=(i/12)*Math.PI*2, speed=1.5+Math.random()*2;
+        stars2.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:1.0,
+          color:[C.green,'#e8c56d',C.light][i%3],size:3+Math.floor(Math.random()*3)});
+      }
+    }
+    function updateStars2(dt){
+      stars2=stars2.filter(s=>s.life>0);
+      stars2.forEach(s=>{
+        s.x+=s.vx; s.y+=s.vy; s.vy+=0.08; s.life-=0.02;
+        ctx.globalAlpha=Math.max(0,s.life);
+        drawPixelRect2(s.x,s.y,s.size,s.size,s.color);
+      });
+      ctx.globalAlpha=1;
+    }
+
+    const popup2     = document.getElementById('edu-trophy-popup');
+    const popupIcon2 = document.getElementById('edu-trophy-icon');
+    const popupTitle2= document.getElementById('edu-trophy-title');
+    const popupDate2 = document.getElementById('edu-trophy-date');
+    let trophyShowing2=false;
+    function showTrophy2(m){
+      trophyShowing2=true;
+      popupIcon2.textContent=m.icon;
+      popupTitle2.textContent=m.label.replace('\\n',' · ');
+      popupDate2.textContent=m.date;
+      popup2.style.display='block';
+      popup2.style.opacity='1';
+      playTrophy2();
+    }
+    function hideTrophy2(){ trophyShowing2=false; popup2.style.display='none'; }
+
+    let last2=0, stepCounter2=0;
+    function loop2(ts){
+      const dt=Math.min(ts-last2,40); last2=ts;
+      ctx.fillStyle=C.sky; ctx.fillRect(0,0,W,H);
+      clouds.forEach(cl=>drawCloud2(cl.x,cl.y,cl.w));
+      drawGround2();
+      milestones.forEach((m,i)=>drawFlag2(m.x,i<nextMilestoneIdx));
+      ctx.fillStyle=C.dark;
+      ctx.font='5px "Press Start 2P", monospace';
+      milestones.forEach(m=>{ ctx.fillText(m.date,m.x-12,GROUND_Y+20); });
+      updateStars2(dt);
+      if(!paused&&!runDone){
+        charX+=RUN_SPEED;
+        frameTimer+=dt; if(frameTimer>120){runFrame++;frameTimer=0;}
+        if(runFrame%2===0&&frameTimer<10){stepCounter2++; if(stepCounter2%4===0) playStep2();}
+        if(isJumping){ velY+=GRAVITY; charY+=velY;
+          if(charY>=GROUND_Y-CHAR_H){charY=GROUND_Y-CHAR_H;isJumping=false;velY=0;} }
+        if(nextMilestoneIdx<milestones.length){
+          const target=milestones[nextMilestoneIdx];
+          if(charX+CHAR_W>=target.x-2&&charX<=target.x+4){
+            if(!isJumping&&charY>=GROUND_Y-CHAR_H-1){isJumping=true;velY=JUMP_V;playJump2();}
+          }
+          if(charX>target.x+10){paused=true;pauseTimer=PAUSE_DURATION;spawnStars2(target.x,GROUND_Y-44);showTrophy2(target);nextMilestoneIdx++;}
+        } else if(charX>W+20){
+          runDone=true;
+          document.getElementById('edu-runner-replay').style.display='block';
+        }
+      } else if(paused){ pauseTimer-=dt; if(pauseTimer<=0){paused=false;hideTrophy2();} }
+      drawChar2(Math.round(charX),Math.round(charY),runFrame,isJumping||velY!==0);
+      if(!runDone) requestAnimationFrame(loop2);
+    }
+
+    function startEduRunner(){
+      charX=-CHAR_W; charY=GROUND_Y-CHAR_H; velY=0; isJumping=false;
+      runFrame=0; frameTimer=0; nextMilestoneIdx=0;
+      paused=false; pauseTimer=0; runDone=false; stars2=[];
+      hideTrophy2();
+      document.getElementById('edu-runner-replay').style.display='none';
+      last2=0;
+      requestAnimationFrame(ts=>{last2=ts; requestAnimationFrame(loop2);});
+    }
+
+    const eduWin=document.getElementById('win-education');
+    let eduRunnerStarted=false;
+
+    // Draw the static scene immediately (ground + flags, no character moving)
+    function drawStaticScene() {
+      ctx.fillStyle=C.sky; ctx.fillRect(0,0,W,H);
+      clouds.forEach(cl=>drawCloud2(cl.x,cl.y,cl.w));
+      drawGround2();
+      milestones.forEach((m)=>drawFlag2(m.x,false));
+      ctx.fillStyle=C.dark;
+      ctx.font='5px "Press Start 2P", monospace';
+      milestones.forEach(m=>{ ctx.fillText(m.date,m.x-12,GROUND_Y+20); });
+      drawChar2(20, GROUND_Y-CHAR_H, 0, false);
+    }
+    drawStaticScene();
+
+    // Start running 5 seconds after page load
+    setTimeout(() => {
+      if (!eduRunnerStarted) {
+        eduRunnerStarted = true;
+        startEduRunner();
+      }
+    }, 5000);
+
+    document.getElementById('edu-runner-replay').addEventListener('click', () => {
+      eduRunnerStarted = true;
+      startEduRunner();
+    });
+  })();
+
+  /* ─── COLLAPSIBLE TIMELINE ───────────────────────────────────── */
+  document.querySelectorAll('.timeline-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const entry = btn.closest('.timeline-entry');
+      const bullets = entry.querySelector('.timeline-bullets');
+      const isOpen = entry.classList.contains('open');
+      if (isOpen) {
+        entry.classList.remove('open');
+        bullets.classList.add('collapsed');
+        btn.setAttribute('aria-expanded', 'false');
+      } else {
+        entry.classList.add('open');
+        bullets.classList.remove('collapsed');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  /* ─── PROJECT CARD KEYBOARD ───────────────────────────────────── */
+  document.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const link = card.querySelector('.overlay-open');
+        if (link) link.click();
+      }
+    });
+  });
+</script>
+
+<div id="tweaks-root"></div>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "#d97757",
+  "bgParticles": true,
+  "windowOffsets": true,
+  "runnerSpeed": 1.6,
+  "bootScreen": true,
+  "tagline": "Building systems that work in the real world."
+}/*EDITMODE-END*/;
+
+function PortfolioTweaks() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // Apply accent color live
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--orange', tweaks.accentColor);
+  }, [tweaks.accentColor]);
+
+  // Apply window offsets
+  React.useEffect(() => {
+    const style = document.getElementById('tweak-offsets-style') || (() => {
+      const s = document.createElement('style');
+      s.id = 'tweak-offsets-style';
+      document.head.appendChild(s);
+      return s;
+    })();
+    style.textContent = tweaks.windowOffsets ? '' :
+      '.mac-window:nth-child(even){margin-left:0!important}.mac-window:nth-child(odd){margin-right:0!important}';
+  }, [tweaks.windowOffsets]);
+
+  // Apply bg particles
+  React.useEffect(() => {
+    const c = document.getElementById('bg-canvas');
+    if (c) c.style.opacity = tweaks.bgParticles ? '0.55' : '0';
+  }, [tweaks.bgParticles]);
+
+  // Apply tagline
+  React.useEffect(() => {
+    const el = document.querySelector('.hero-tagline');
+    if (el) el.textContent = '"' + tweaks.tagline + '"';
+  }, [tweaks.tagline]);
+
+  return (
+    <TweaksPanel>
+      <TweakSection label="Colors">
+        <TweakColor label="Accent Color" value={tweaks.accentColor} onChange={v => setTweak('accentColor', v)} />
+      </TweakSection>
+      <TweakSection label="Layout">
+        <TweakToggle label="Window Offsets" value={tweaks.windowOffsets} onChange={v => setTweak('windowOffsets', v)} />
+        <TweakToggle label="BG Particles" value={tweaks.bgParticles} onChange={v => setTweak('bgParticles', v)} />
+        <TweakToggle label="Boot Screen" value={tweaks.bootScreen} onChange={v => {
+          setTweak('bootScreen', v);
+          const b = document.getElementById('boot-screen');
+          if (b) b.style.display = v ? '' : 'none';
+        }} />
+      </TweakSection>
+      <TweakSection label="Copy">
+        <TweakText label="Tagline" value={tweaks.tagline} onChange={v => setTweak('tagline', v)} />
+      </TweakSection>
+    </TweaksPanel>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<PortfolioTweaks />);
+</script>
+
+</body>
+</html>
