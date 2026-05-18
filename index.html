@@ -709,6 +709,74 @@
       line-height: 1.7;
     }
 
+    /* ─── WINDOW 7: CERTS ───────────────────────────────────────── */
+    .certs-carousel {
+      position: relative;
+      overflow: hidden;
+    }
+    .certs-track {
+      display: flex;
+      gap: 16px;
+      transition: transform 0.3s ease;
+    }
+    .cert-slide {
+      flex: 0 0 calc(50% - 8px);
+      border: 2px solid var(--dark);
+      box-shadow: 3px 3px 0 var(--dark);
+      overflow: hidden;
+      background: var(--light);
+    }
+    .cert-slide img {
+      width: 100%;
+      display: block;
+      object-fit: cover;
+    }
+    .cert-caption {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6px;
+      color: var(--dark);
+      text-align: center;
+      padding: 6px 4px;
+      background: var(--light-gray);
+      border-top: 1px solid var(--mid-gray);
+      line-height: 1.8;
+    }
+    .certs-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .certs-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      background: var(--dark);
+      color: var(--light);
+      border: 2px solid var(--dark);
+      box-shadow: 3px 3px 0 var(--orange);
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .certs-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--orange); }
+    .certs-btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--orange); }
+    .certs-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .certs-dot {
+      width: 8px;
+      height: 8px;
+      border: 2px solid var(--dark);
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .certs-dot.active { background: var(--orange); }
+    @media (max-width: 600px) {
+      .cert-slide { flex: 0 0 100%; }
+    }
+
     /* ─── WINDOW 6: CONTACT ─────────────────────────────────────── */
     .contact-form { display: flex; flex-direction: column; gap: 10px; }
     .form-row {
@@ -883,6 +951,8 @@
     <a class="menu-item" href="#win-experience" aria-label="Experience section">Work</a>
     <a class="menu-item" href="#win-founder" aria-label="Ventures section">Ventures</a>
     <a class="menu-item" href="#win-projects" aria-label="Projects section">Projects</a>
+    <a class="menu-item" href="#win-skills" aria-label="Skills section">Skills</a>
+    <a class="menu-item" href="#win-certs" aria-label="Certifications section">Certs</a>
     <a class="menu-item" href="#win-contact" aria-label="Contact section">Contact</a>
   </nav>
   <button id="hamburger" aria-label="Open navigation menu">≡</button>
@@ -900,6 +970,7 @@
   <a class="menu-item" href="#win-founder">Ventures</a>
   <a class="menu-item" href="#win-projects">Projects</a>
   <a class="menu-item" href="#win-skills">Skills</a>
+  <a class="menu-item" href="#win-certs">Certs</a>
   <a class="menu-item" href="#win-contact">Contact</a>
 </nav>
 
@@ -1343,8 +1414,68 @@
   </section>
 
 
-  <!-- WINDOW 07: CONTACT -->
-  <section class="mac-window" id="win-contact" data-screen-label="07 Contact">
+  <!-- WINDOW 07: CERTS -->
+  <section class="mac-window" id="win-certs" data-screen-label="07 Certs">
+    <div class="mac-titlebar" style="background: var(--green);" data-section="win-certs">
+      <div class="titlebar-controls">
+        <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-min" aria-hidden="true"></div>
+        <div class="ctrl-btn ctrl-zoom" aria-hidden="true"></div>
+      </div>
+      <span class="titlebar-label">▌ Certifications.dir</span>
+    </div>
+    <div class="win-content">
+      <div class="certs-carousel" id="certs-carousel" aria-label="Certifications carousel">
+        <div class="certs-track" id="certs-track">
+          <div class="cert-slide">
+            <img src="certs/1MLSpecialization.png" alt="ML Specialization certificate" loading="lazy">
+            <div class="cert-caption">ML Specialization</div>
+          </div>
+          <div class="cert-slide">
+            <img src="certs/2MathForMLandDS.png" alt="Math for ML and Data Science certificate" loading="lazy">
+            <div class="cert-caption">Math for ML &amp; DS</div>
+          </div>
+          <div class="cert-slide">
+            <img src="certs/3AIEngineerAssociate.png" alt="AI Engineer Associate certificate" loading="lazy">
+            <div class="cert-caption">AI Engineer Associate</div>
+          </div>
+          <div class="cert-slide">
+            <img src="certs/4AIEngineerBootcamp.png" alt="AI Engineer Bootcamp certificate" loading="lazy">
+            <div class="cert-caption">AI Engineer Bootcamp</div>
+          </div>
+          <div class="cert-slide">
+            <img src="certs/5AIEngineerSalesforce.png" alt="AI Engineer Salesforce certificate" loading="lazy">
+            <div class="cert-caption">AI Eng. Salesforce</div>
+          </div>
+          <div class="cert-slide">
+            <img src="certs/6DiplomaFullStack.png" alt="Full Stack Diploma certificate" loading="lazy">
+            <div class="cert-caption">Full Stack Diploma</div>
+          </div>
+          <div class="cert-slide">
+            <img src="certs/7ComputerScience.png" alt="Computer Science certificate" loading="lazy">
+            <div class="cert-caption">Computer Science</div>
+          </div>
+          <div class="cert-slide">
+            <img src="certs/8pythondev.png" alt="Python Developer certificate" loading="lazy">
+            <div class="cert-caption">Python Developer</div>
+          </div>
+          <div class="cert-slide">
+            <img src="certs/9javadev.png" alt="Java Developer certificate" loading="lazy">
+            <div class="cert-caption">Java Developer</div>
+          </div>
+        </div>
+      </div>
+      <div class="certs-nav">
+        <button class="certs-btn" id="certs-prev" aria-label="Previous certificates">◀ PREV</button>
+        <div class="certs-dots" id="certs-dots" aria-label="Certificate pages"></div>
+        <button class="certs-btn" id="certs-next" aria-label="Next certificates">NEXT ▶</button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- WINDOW 08: CONTACT -->
+  <section class="mac-window" id="win-contact" data-screen-label="08 Contact">
     <div class="mac-titlebar" style="background: var(--blue);" data-section="win-contact">
       <div class="titlebar-controls">
         <div class="ctrl-btn ctrl-close" aria-hidden="true"></div>
@@ -1514,6 +1645,7 @@
     'Ventures':   'win-founder',
     'Projects':   'win-projects',
     'Skills':     'win-skills',
+    'Certs':      'win-certs',
     'Contact':    'win-contact'
   };
 
@@ -1883,6 +2015,49 @@
       }
     });
   });
+
+  /* ─── CERTS CAROUSEL ─────────────────────────────────────────── */
+  (function() {
+    const track   = document.getElementById('certs-track');
+    const dotsEl  = document.getElementById('certs-dots');
+    const prevBtn = document.getElementById('certs-prev');
+    const nextBtn = document.getElementById('certs-next');
+    if (!track) return;
+
+    const slides      = track.querySelectorAll('.cert-slide');
+    const perPage     = () => window.innerWidth <= 600 ? 1 : 2;
+    let current       = 0;
+
+    function totalPages() { return Math.ceil(slides.length / perPage()); }
+
+    function buildDots() {
+      dotsEl.innerHTML = '';
+      for (let i = 0; i < totalPages(); i++) {
+        const d = document.createElement('div');
+        d.className = 'certs-dot' + (i === current ? ' active' : '');
+        d.setAttribute('aria-label', 'Page ' + (i + 1));
+        d.addEventListener('click', () => goTo(i));
+        dotsEl.appendChild(d);
+      }
+    }
+
+    function goTo(page) {
+      current = Math.max(0, Math.min(page, totalPages() - 1));
+      const pp = perPage();
+      const slideW = slides[0].offsetWidth + 16; // gap 16px
+      track.style.transform = `translateX(-${current * pp * slideW}px)`;
+      dotsEl.querySelectorAll('.certs-dot').forEach((d, i) =>
+        d.classList.toggle('active', i === current));
+    }
+
+    prevBtn.addEventListener('click', () => goTo(current - 1));
+    nextBtn.addEventListener('click', () => goTo(current + 1));
+
+    window.addEventListener('resize', () => { buildDots(); goTo(0); });
+
+    buildDots();
+    goTo(0);
+  })();
 
   /* ─── PROJECT CARD KEYBOARD ───────────────────────────────────── */
   document.querySelectorAll('.project-card').forEach(card => {
