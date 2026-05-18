@@ -716,6 +716,7 @@
     }
     .certs-track {
       display: flex;
+      align-items: center;
       gap: 16px;
       transition: transform 0.3s ease;
     }
@@ -723,13 +724,15 @@
       flex: 0 0 calc(50% - 8px);
       border: 2px solid var(--dark);
       box-shadow: 3px 3px 0 var(--dark);
-      overflow: hidden;
       background: var(--light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .cert-slide img {
       width: 100%;
+      height: auto;
       display: block;
-      object-fit: cover;
     }
     .cert-caption {
       font-family: 'Press Start 2P', monospace;
@@ -1449,7 +1452,7 @@
           </div>
           <div class="cert-slide">
             <img src="certs/6DiplomaFullStack.png" alt="Full Stack Diploma certificate" loading="lazy">
-            <div class="cert-caption">Full Stack Diploma</div>
+            <div class="cert-caption">Software Development Diploma</div>
           </div>
           <div class="cert-slide">
             <img src="certs/7ComputerScience.png" alt="Computer Science certificate" loading="lazy">
